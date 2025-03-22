@@ -2,25 +2,26 @@ import Image from "next/image";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { getArticles, getArticleBySlug, Article } from "../api/articles";
+import { getArticles, Article } from "../api/articles";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/solid";
 import { Metadata } from "next";
 
-export async function generateMetadata({ params }: { params: { slug?: string } }): Promise<Metadata> {
-  const slug = params?.slug || ""; // Get slug from URL
-  const article = slug ? await getArticleBySlug(slug) : null;
-  const title = article?.metaTitle || "Not Found metaTitle";
-  const description = article?.metaDescription || "Not Found metaDescription";
-  const keywords = article?.metaKeywords || "blog, nextjs, strapi, seo";
-  const image = article?.cover?.url ? `http://localhost:1337${article.cover.url}` : "/default-thumbnail.jpg";
+export async function generateMetadata(): Promise<Metadata> {
+  const title = "Next.js & Strapi Blog | Explore Tech, Science & More";
+  const description = "Discover insightful articles on technology, science, internet culture, and more! Powered by Next.js and Strapi, our blog keeps you updated with the latest trends and fascinating stories.";
+  const keywords = "web development, Next.js, Strapi, blog, technology, internet, science, news, articles, CMS";
+  const image = "/banner.jpg";
+  const url = "http://localhost:3000";
+
   return {
-    title: article?.metaTitle || "Not Found metaTitle",
-    description: article?.metaDescription || "Not Found metaDescription",
-    keywords: article?.metaKeywords || "Not Found metaKeywords",
+    title,
+    description,
+    keywords,
     openGraph: {
       title,
       description,
-      type: "article",
+      url,
+      type: "website",
       images: [{ url: image, width: 1200, height: 630, alt: title }],
     },
   };
@@ -39,7 +40,7 @@ export default async function HomePage() {
       {/* Header */}
       <div className="relative w-full h-72">
         <Image
-          src="/blue-surface-with-study-tools.jpg"
+          src="/banner.jpg"
           alt="Blog Header - Study Tools"
           layout="fill"
           objectFit="cover"

@@ -4,7 +4,13 @@ export interface Article {
   title: string;
   content: string;
   cover: { url: string };
+  //Add SEO
   publishedAt: Date;
+  metaTitle: string;
+  metaDescription: string;
+  metaKeywords: string;
+  canonicalURL: string;
+  ogImage?: { url: string };
 }
 // Define Strapi URL
 const STRAPI_URL = "http://localhost:1337";

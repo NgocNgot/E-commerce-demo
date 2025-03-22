@@ -98,26 +98,23 @@ export async function getArticleBySlug(slug: string): Promise<Article | null> {
     const seoBlock = articleData.blocks.find(
       (block: any) => block.__typename === "ComponentSharedSeo"
     );
+    // Check data
+    console.log("Fetched article:", JSON.stringify(articleData, null, 2));
 
     return {
       title: articleData.title || "No title",
       documentId: articleData.documentId || "",
       description: articleData.description || "",
-      // metaTitle: seoBlock?.metaTitle || articleData.title || "Default Title",
-      metaTitle: articleData.blocks.find(
-        (block: any) => block.__typename === "ComponentSharedSeo")?.metaTitle || "Default Title",
-      metaDescription: articleData.blocks.find(
-        (block: any) => block.__typename === "ComponentSharedSeo")?.metaDescription || "Default Description",
+      metaTitle: seoBlock?.metaTitle || articleData.title || "Default Title",
+      metaDescription: seoBlock?.metaDescription || "Default Description",
+      metaKeywords: seoBlock?.keywords || "Default Keywords",
       body: articleData.blocks.find(
         (block: any) => block.__typename === "ComponentSharedRichText"
       )?.body || "Default Body",
-      metaKeywords: seoBlock?.keywords || "Default Keywords",
       slug: articleData.slug,
-      // cover: articleData.cover ? { url: articleData.cover.url } : undefined,
-       cover: articleData.cover
+      cover: articleData.cover
         ? { url: articleData.cover.url.startsWith("/") ? BASE_URL + articleData.cover.url : articleData.cover.url }
         : undefined,
-      // ogImage: seoBlock?.shareImage?.url || "",
       ogImage: seoBlock?.shareImage?.url
         ? seoBlock.shareImage.url.startsWith("/") ? BASE_URL + seoBlock.shareImage.url : seoBlock.shareImage.url
         : "",

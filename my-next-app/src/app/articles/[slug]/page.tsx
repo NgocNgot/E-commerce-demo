@@ -1,23 +1,26 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { getArticleBySlug } from "../../../api/articles";
+import { getArticleBySlug, Article } from "../../../api/articles";
 import { Metadata } from "next";
 import ReactMarkdown from "react-markdown";
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const article = await getArticleBySlug(params.slug);
-
-  if (!article) return {};
+  const article: Article | null = await getArticleBySlug(params.slug);
+  const title = article?.metaTitle || "Not found metaTitle";
+  const description = article?.metaDescription || "Not found metaDescription";
+  const keywords = article?.metaKeywords || "Not found keywords";
+  const image = article?.cover?.url ? `http://localhost:1337${article.cover.url}` : "/banner.jpg";
 
   return {
-    title: article.metaTitle || article.title,
-    description: article.metaDescription || article.description,
-    keywords: article.metaKeywords?.split(",") || [],
+    title,
+    description,
+    keywords,
     openGraph: {
-      title: article.metaTitle || article.title,
-      description: article.metaDescription || article.description,
-      images: article.ogImage ? [{ url: article.ogImage }] : [],
+      title,
+      description,
+      type: "article",
+      images: [{ url: image, width: 1200, height: 630, alt: title }],
     },
   };
 }
