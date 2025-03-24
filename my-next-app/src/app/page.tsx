@@ -2,27 +2,57 @@ import Image from "next/image";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { getArticles, Article } from "../api/articles";
+import { getArticles, getArticleBySlug, Article } from "../api/articles";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/solid";
 import { Metadata } from "next";
 
+
 export async function generateMetadata(): Promise<Metadata> {
-  const title = "Next.js & Strapi Blog | Explore Tech, Science & More";
-  const description = "Discover insightful articles on technology, science, internet culture, and more! Powered by Next.js and Strapi, our blog keeps you updated with the latest trends and fascinating stories.";
-  const keywords = "web development, Next.js, Strapi, blog, technology, internet, science, news, articles, CMS";
-  const image = "/banner.jpg";
-  const url = "http://localhost:3000";
+  const slug = "nextjs-strapi-blog";
+  const article = await getArticleBySlug(slug);
+
+  if (!article) {
+    return {
+      title: "No metaTitle",
+      description:
+        "No metaDescription",
+      keywords:
+        "No metaKeywords",
+      openGraph: {
+        title: "No metaTitle in graph",
+        description:
+          "No metaDescription in graph",
+        url: "http://localhost:3000",
+        type: "website",
+        images: [
+          {
+            url: "./banner.jpg",
+            width: 1200,
+            height: 630,
+            alt: "Next.js & Strapi Blog",
+          },
+        ],
+      },
+    };
+  }
 
   return {
-    title,
-    description,
-    keywords,
+    title: article.metaTitle,
+    description: article.metaDescription,
+    keywords: article.metaKeywords,
     openGraph: {
-      title,
-      description,
-      url,
-      type: "website",
-      images: [{ url: image, width: 1200, height: 630, alt: title }],
+      title: article.metaTitle,
+      description: article.metaDescription,
+      url: `http://localhost:3000/article/${article.slug}`,
+      type: "article",
+      images: [
+        {
+          url: article.ogImage || "/default-og.jpg",
+          width: 1200,
+          height: 630,
+          alt: article.metaTitle,
+        },
+      ],
     },
   };
 }
