@@ -1,5 +1,5 @@
 import { gql } from "@apollo/client";
-import client from "../../lib/apolloClient";
+import client from "../lib/apolloClient";
 const BASE_URL = "http://localhost:1337";
 // Article type
 export interface Article {
