@@ -1,0 +1,27 @@
+{
+  "kind": "collectionType",
+  "collectionName": "shippings",
+  "info": {
+    "singularName": "shipping",
+    "pluralName": "shippings",
+    "displayName": "Shipping"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "isPhysical": {
+      "type": "boolean",
+      "default": true
+    },
+    "weight": {
+      "type": "biginteger"
+    },
+    "products": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::product.product",
+      "mappedBy": "shipping"
+    }
+  }
+}

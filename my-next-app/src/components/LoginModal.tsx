@@ -10,25 +10,32 @@ interface LoginModalProps {
 const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLoginSuccess }) => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [error, setError] = useState("");
+    const [error] = useState("");
 
     const handleLogin = async () => {
         try {
             const response = await fetch("http://localhost:1337/api/auth/local", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ identifier: email, password })
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    identifier: email,
+                    password: password,
+                }),
             });
 
+            const data = await response.json();
+
             if (!response.ok) {
-                throw new Error("Invalid credentials");
+                throw new Error(data.message || "Login failed");
             }
 
-            const data = await response.json();
-            onLoginSuccess(data.user, data.jwt);
+            console.log("Login successful", data);
+            alert("Log in successfully!");
             onClose();
-        } catch (err) {
-            setError("Invalid email or password.");
+        } catch (error) {
+            console.error("Error during login:", error);
         }
     };
 

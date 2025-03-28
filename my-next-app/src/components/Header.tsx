@@ -4,8 +4,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 
 const banners = [
-    "http://localhost:1337/uploads/banner_1_85cf4726f0.png",
-    "http://localhost:1337/uploads/banner_2_21d84e704d.png",
+    "http://localhost:1337/uploads/banner_1_71b4632f49.png",
+    "http://localhost:1337/uploads/banner_2_e9e7f8d4bb.png",
 ];
 
 export default function Header() {
