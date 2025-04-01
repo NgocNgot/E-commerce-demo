@@ -62,6 +62,23 @@ export default function CartPage() {
 
   const totalPrice = cart.reduce((total, item) => total + item.price * item.quantity, 0);
 
+  const handleCheckout = async () => {
+    // Gọi API Strapi để tạo session thanh toán Stripe
+    const res = await fetch("http://localhost:1337/api/payments/checkout", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ cart }),
+    });
+
+    const { url } = await res.json();
+
+    // Chuyển hướng người dùng đến trang thanh toán Stripe
+    const stripe = await stripePromise;
+    stripe.redirectToCheckout({ sessionId: url });
+  };
+
   return (
     <>
       <Navbar />
@@ -111,7 +128,14 @@ export default function CartPage() {
           ))}
         </div>
         <div className="flex justify-between items-center mt-6 px-4">
-          <button className="bg-rose-400 font-bold text-white py-2 px-8 rounded-full hover:bg-red-700 w-1/3">CHECK OUT</button>
+          {/* Check out */}
+          <button
+            className="bg-rose-400 font-bold text-white py-2 px-8 rounded-full hover:bg-red-700 w-1/3"
+            onClick={handleCheckout}
+          >
+            CHECK OUT
+          </button>
+
           <div className="text-2xl font-bold pr-4">Subtotal: &nbsp; ${totalPrice}</div>
         </div>
       </div>

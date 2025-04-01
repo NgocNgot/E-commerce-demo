@@ -3,12 +3,25 @@ import Link from "next/link";
 import { useState } from "react";
 import { ShoppingBagIcon, UserIcon, MagnifyingGlassIcon, HeartIcon } from "@heroicons/react/24/outline";
 import LoginModal from "./LoginModal";
-import { useUser } from "@/context/UserContext"; // Giả sử bạn có context User
+import { useUser } from "@/context/UserContext";
+import { useCart } from "@/context/CartContext";
 
 export default function Navbar() {
-  const { user, logout } = useUser();
+  const { user, logout, login } = useUser();
   const [menuOpen, setMenuOpen] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const { assignCartToUser } = useCart()
+
+  const handleLoginSuccess = (userData: any, token: string) => {
+    // Call the login function from UserContext
+    login(userData, token)
+
+    // Assign cart items to the logged-in user
+    if (userData.id) {
+      assignCartToUser(userData.id, token)
+    }
+  }
+
 
   return (
     <nav className="bg-white shadow-md fixed top-0 left-0 w-full z-50 border-b border-gray-200">
@@ -105,8 +118,17 @@ export default function Navbar() {
         <LoginModal
           onClose={() => setShowLoginModal(false)}
           onLoginSuccess={(user, token) => {
-            console.log("Login successful:", user, token);
-            setShowLoginModal(false);
+            console.log("Login successful:", user, token)
+            // Update the user context with the logged in user
+            login(user, token)
+            console.log("User context updated:", user);
+
+            // Assign cart items to the logged-in user
+            if (user.id) {
+              assignCartToUser(user.id, token)
+            }
+
+            setShowLoginModal(false)
           }}
         />
       )}

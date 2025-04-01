@@ -1,16 +1,18 @@
-"use client";
-import { useState } from "react";
-import { XMarkIcon } from "@heroicons/react/24/outline";
+"use client"
+import { useState } from "react"
+import type React from "react"
+
+import { XMarkIcon } from "@heroicons/react/24/outline"
 
 interface LoginModalProps {
-    onClose: () => void;
-    onLoginSuccess: (user: any, token: string) => void;
+    onClose: () => void
+    onLoginSuccess: (user: any, token: string) => void
 }
 
 const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLoginSuccess }) => {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [error] = useState("");
+    const [email, setEmail] = useState("")
+    const [password, setPassword] = useState("")
+    const [error] = useState("")
 
     const handleLogin = async () => {
         try {
@@ -23,21 +25,25 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLoginSuccess }) => {
                     identifier: email,
                     password: password,
                 }),
-            });
+            })
 
-            const data = await response.json();
+            const data = await response.json()
 
             if (!response.ok) {
-                throw new Error(data.message || "Login failed");
+                throw new Error(data.message || "Login failed")
             }
 
-            console.log("Login successful", data);
-            alert("Log in successfully!");
-            onClose();
+            console.log("Login successful", data)
+
+            // Call onLoginSuccess with user data and token
+            onLoginSuccess(data.user, data.jwt)
+
+            alert("Log in successfully!")
+            onClose()
         } catch (error) {
-            console.error("Error during login:", error);
+            console.error("Error during login:", error)
         }
-    };
+    }
 
     return (
         <div className="fixed inset-0 flex justify-center items-center bg-opacity-50 backdrop-blur-sm z-50">
@@ -79,7 +85,8 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLoginSuccess }) => {
                 </button>
             </div>
         </div>
-    );
-};
+    )
+}
 
-export default LoginModal;
+export default LoginModal
+
