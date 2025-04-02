@@ -5,11 +5,13 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useUser } from "@/context/UserContext";
 import { MinusIcon, PlusIcon } from "@heroicons/react/24/solid";
+import { useRouter } from "next/navigation";
+import router from "next/router";
 
 export default function CartPage() {
   const [cart, setCart] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-
+  const router = useRouter();
   useEffect(() => {
     const fetchCart = async () => {
       try {
@@ -61,23 +63,11 @@ export default function CartPage() {
   };
 
   const totalPrice = cart.reduce((total, item) => total + item.price * item.quantity, 0);
-
-  const handleCheckout = async () => {
-    // Gọi API Strapi để tạo session thanh toán Stripe
-    const res = await fetch("http://localhost:1337/api/payments/checkout", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ cart }),
-    });
-
-    const { url } = await res.json();
-
-    // Chuyển hướng người dùng đến trang thanh toán Stripe
-    const stripe = await stripePromise;
-    stripe.redirectToCheckout({ sessionId: url });
+  const handleCheckout = () => {
+    localStorage.setItem("cart", JSON.stringify(cart));
+    router.push("/checkout");
   };
+
 
   return (
     <>
@@ -129,8 +119,9 @@ export default function CartPage() {
         </div>
         <div className="flex justify-between items-center mt-6 px-4">
           {/* Check out */}
+
           <button
-            className="bg-rose-400 font-bold text-white py-2 px-8 rounded-full hover:bg-red-700 w-1/3"
+            className="bg-rose-400 font-bold text-white py-2 px-8 rounded-full hover:bg-rose-500 w-1/3"
             onClick={handleCheckout}
           >
             CHECK OUT

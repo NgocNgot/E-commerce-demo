@@ -68,10 +68,16 @@
       "target": "api::shipping.shipping",
       "inversedBy": "products"
     },
-    "cart": {
+    "carts": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::cart.cart",
+      "inversedBy": "products"
+    },
+    "order": {
       "type": "relation",
       "relation": "manyToOne",
-      "target": "api::cart.cart",
+      "target": "api::order.order",
       "inversedBy": "products"
     }
   }

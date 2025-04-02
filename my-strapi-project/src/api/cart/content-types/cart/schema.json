@@ -13,9 +13,9 @@
   "attributes": {
     "products": {
       "type": "relation",
-      "relation": "oneToMany",
+      "relation": "manyToMany",
       "target": "api::product.product",
-      "mappedBy": "cart"
+      "mappedBy": "carts"
     },
     "quantity": {
       "type": "integer"
@@ -25,6 +25,9 @@
       "relation": "manyToOne",
       "target": "plugin::users-permissions.user",
       "inversedBy": "carts"
+    },
+    "totalPrice": {
+      "type": "decimal"
     }
   }
 }
