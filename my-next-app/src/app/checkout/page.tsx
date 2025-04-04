@@ -3,9 +3,13 @@
 import { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
 import Image from "next/image";
+import { loadStripe } from "@stripe/stripe-js";
+const stripePromise = loadStripe("pk_test_51R91vrPbbfCp8zjVn18peJqrR2xvL2Q28PV39fa8QBqXui9u47abRheE0tWjEUff53ryeo3GBR25UyzCl1ZDSgX5007KhHxUn7");
+import { CardElement, useStripe, useElements, Elements } from "@stripe/react-stripe-js";
+import { CardNumberElement, CardExpiryElement, CardCvcElement } from '@stripe/react-stripe-js';
 
-export default function CheckoutPage() {
-    const [cart, setCart] = useState<any[]>([]);
+function Checkout() {
+    const [cart, setCart] = useState<any[]>([]);  // Send Cart data is array
     const [userInfo, setUserInfo] = useState({
         name: "",
         address: "",
@@ -15,6 +19,10 @@ export default function CheckoutPage() {
     const [loading, setLoading] = useState(false);
     const [saveInfo, setSaveInfo] = useState(false);
     const [useShippingAsBilling, setUseShippingAsBilling] = useState(true);
+
+    const stripe = useStripe();
+    const elements = useElements();
+    const cardElement = elements?.getElement(CardElement);
 
     useEffect(() => {
         const storedCart = JSON.parse(localStorage.getItem("cart") || "[]");
@@ -43,63 +51,155 @@ export default function CheckoutPage() {
 
         setLoading(true);
 
-        const orderData = {
-            data: {
-                users_permissions_user: { id: 2 }, // User Ngoc
-                products: cart.map((item) => item.id), // Get product on cart
-                statusCheckout: "Pending",
-            },
-        };
-
-        console.log("Sending order data:", orderData);
-
         try {
-            const response = await fetch("http://localhost:1337/api/orders", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify(orderData),
-            });
-
-            const responseData = await response.json();
-            console.log("Response data:", responseData);
-
-            // Handle success
-            if (response.ok) {
-                alert("Order placed successfully!");
-                // Clear cart
-                localStorage.setItem("cart", "[]");
-                setCart([]);
-            } else {
-                alert("Failed to place order. Please try again.");
+            // Get total price of cart
+            const totalAmount = getTotal() * 100; // Convert to cents
+            if (totalAmount <= 0) {
+                alert("Cart is empty!");
+                setLoading(false);
+                return;
             }
+
+            // Send cart data to the server to create an order
+            const orderResponse = await fetch(
+                "http://localhost:1337/api/orders",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({
+                        data: {
+                            users_permissions_user: { id: 2 },
+                            totalPrice: getTotal(),
+                            name: userInfo.name,
+                            address: userInfo.address,
+                            city: userInfo.city,
+                            phone: userInfo.phone,
+                            statusCheckout: "Pending",
+                            lineItems: cart.map((item) => ({
+                                product: { id: item.id },
+                                quantity: item.quantity,
+                                price: item.price,
+                            })),
+                        },
+                    }),
+                }
+            );
+
+            const orderData = await orderResponse.json();
+            if (!orderResponse.ok) {
+                alert("Failed to place order!");
+                setLoading(false);
+                return;
+            }
+
+            console.log("Order created:", orderData);
+            const orderId = orderData.data.id; // Get order id from response
+            let finalOrderId = orderId - 1;
+
+            // Wait for a few seconds to ensure the order is fully created
+            setTimeout(async () => {
+                if (!stripe || !elements) {
+                    alert("Stripe is not loaded!");
+                    setLoading(false);
+                    return;
+                }
+
+                const cardElement = elements.getElement(CardElement);
+                if (!cardElement) {
+                    alert("Card Element not found!");
+                    setLoading(false);
+                    return;
+                }
+
+                // Create PaymentMethod
+                const { error: pmError, paymentMethod } =
+                    await stripe.createPaymentMethod({
+                        type: "card",
+                        card: cardElement,
+                        billing_details: {
+                            name: userInfo.name,
+                            email: "email@example.com",
+                        },
+                    });
+
+                if (pmError) {
+                    console.error("Payment method creation failed:", pmError);
+                    alert(`Payment failed: ${pmError.message}`);
+                    setLoading(false);
+                    return;
+                }
+
+                console.log("Payment Method created:", paymentMethod);
+
+                // Create payment intent and link it with order
+                const paymentResponse = await fetch(
+                    "http://localhost:1337/api/payments",
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${token}`,
+                        },
+                        body: JSON.stringify({
+                            data: {
+                                amount: totalAmount / 100,
+                                currency: "USD",
+                                statusPayment: "Pending",
+                                users_permissions_user: { id: 2 },
+                                order: { id: finalOrderId },
+                                paymentIntentId: paymentMethod.id,
+                            },
+                        }),
+                    }
+                );
+
+                const paymentData = await paymentResponse.json();
+                console.log("Payment response:", paymentData); // Log the entire payment response
+
+                if (!paymentResponse.ok || !paymentData.clientSecret) {
+                    alert("Failed to create payment intent!");
+                    setLoading(false);
+                    return;
+                }
+
+                console.log("Payment Intent created:", paymentData);
+
+                // Confirm Payment
+                const { error, paymentIntent } = await stripe.confirmCardPayment(
+                    paymentData.clientSecret,
+                    {
+                        payment_method: paymentMethod.id,
+                    }
+                );
+
+                if (error) {
+                    console.error("Payment failed:", error);
+                    alert(`Payment failed: ${error.message}`);
+                } else if (paymentIntent && paymentIntent.status === "succeeded") {
+                    alert("Payment successful!");
+                    localStorage.setItem("cart", "[]");
+                    setCart([]);
+                }
+            }, 3000); // Delay 3 seconds to ensure order is created
         } catch (error) {
-            console.error("Error placing order:", error);
+            console.error("Error processing payment:", error);
             alert("An error occurred. Please try again.");
         } finally {
             setLoading(false);
         }
     };
 
-
-    const getSubtotal = () => {
+    const getTotal = () => {
         return cart.reduce((total, item) => total + item.price * item.quantity, 0);
     };
 
-    const getTaxes = () => {
-        return Math.round(getSubtotal() * 0.1);
-    };
-
-    const getTotal = () => {
-        return getSubtotal() + getTaxes();
-    };
-
-    // Format price
     const formatCurrency = (amount: number) => {
         return `$${amount.toLocaleString()}`;
     };
+
 
     return (
         <>
@@ -166,29 +266,26 @@ export default function CheckoutPage() {
                                     </div>
                                     <div className="p-4 space-y-4">
                                         {/* Card Number */}
-                                        <div className="h-10 bg-gray-200 rounded-xl"></div>
-                                        {/* Expiration Date and Verification Code */}
-                                        <div className="flex space-x-4">
-                                            <div className="h-10 bg-gray-200 rounded-xl w-2/3"></div>
-                                            <div className="h-10 bg-gray-200 rounded-xl w-1/3"></div>
+                                        <div className="h-10 bg-gray-200 rounded-xl">
+                                            <CardElement className="border p-3 rounded-md" />
+                                            {/* <CardNumberElement id="cardNumber" className="w-full p-2" /> */}
                                         </div>
-                                        {/* Full Name on Card */}
-                                        <div className="h-10 bg-gray-200 rounded-xl"></div>
+
+                                        {/* Expiration Date and Verification Code */}
+                                        {/* <div className="flex space-x-4">
+                                            <div className="h-10 bg-gray-200 rounded-xl w-2/3">
+                                                <CardExpiryElement id="expiryDate" className="w-full p-2" />
+                                            </div>
+                                            <div className="h-10 bg-gray-200 rounded-xl w-1/3">
+                                                <CardCvcElement id="cvc" className="w-full p-2" />
+                                            </div>
+                                        </div>
+                                         */}
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Button Pay now */}
-                            <div className="mb-8">
-                                <button
-                                    onClick={handlePayment}
-                                    disabled={loading}
-                                    className={`w-full py-4 rounded-full text-center font-bold text-white ${loading ? "bg-rose-400" : "bg-rose-400 hover:bg-rose-500"
-                                        }`}
-                                >
-                                    {loading ? "Processing..." : "PAY NOW"}
-                                </button>
-                            </div>
+
                         </section>
 
                         {/* Right side */}
@@ -225,7 +322,7 @@ export default function CheckoutPage() {
                                     <div className="border-t border-gray-300 pt-4 space-y-2">
                                         <div className="flex justify-between">
                                             <span>Subtotal · {cart.length} items</span>
-                                            <span>{formatCurrency(getSubtotal())}</span>
+                                            <span>{formatCurrency(getTotal())}</span>
                                         </div>
                                         <div className="flex justify-between">
                                             <span>Shipping</span>
@@ -243,11 +340,31 @@ export default function CheckoutPage() {
                                         </div>
                                     </div>
                                 </div>
+                                {/* Button Pay now */}
+                                <div className="mb-8">
+                                    <button
+                                        onClick={handlePayment}
+                                        disabled={loading}
+                                        className={`w-full py-4 rounded-full text-center font-bold text-white ${loading ? "bg-rose-400" : "bg-rose-400 hover:bg-rose-500"
+                                            }`}
+                                    >
+                                        {loading ? "Processing..." : "PAY NOW"}
+                                    </button>
+                                </div>
                             </div>
+
                         </aside>
                     </div>
                 </div>
             </div>
         </>
+    );
+}
+
+export default function CheckoutPage() {
+    return (
+        <Elements stripe={stripePromise}>
+            <Checkout />
+        </Elements>
     );
 }

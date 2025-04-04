@@ -2,10 +2,10 @@ module.exports = {
   routes: [
     {
       method: "POST",
-      path: "/payments/checkout",
-      handler: "payment.checkout",
+      path: "/payments",
+      handler: "payment.createPaymentIntent",
       config: {
-        auth: false, // Không cần xác thực
+        auth: false,
       },
     },
   ],

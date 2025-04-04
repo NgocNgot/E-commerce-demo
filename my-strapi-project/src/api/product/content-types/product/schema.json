@@ -73,12 +73,6 @@
       "relation": "manyToMany",
       "target": "api::cart.cart",
       "inversedBy": "products"
-    },
-    "order": {
-      "type": "relation",
-      "relation": "manyToOne",
-      "target": "api::order.order",
-      "inversedBy": "products"
     }
   }
 }

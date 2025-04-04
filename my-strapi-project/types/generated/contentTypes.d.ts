@@ -621,12 +621,13 @@ export interface ApiOrderOrder extends Struct.CollectionTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    lineItems: Schema.Attribute.JSON;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::order.order'> &
       Schema.Attribute.Private;
     name: Schema.Attribute.String;
+    payment: Schema.Attribute.Relation<'oneToOne', 'api::payment.payment'>;
     phone: Schema.Attribute.String;
-    products: Schema.Attribute.Relation<'oneToMany', 'api::product.product'>;
     publishedAt: Schema.Attribute.DateTime;
     statusCheckout: Schema.Attribute.Enumeration<
       ['Pending', 'Completed', 'Cancelled']
@@ -637,6 +638,45 @@ export interface ApiOrderOrder extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     users_permissions_user: Schema.Attribute.Relation<
       'manyToOne',
+      'plugin::users-permissions.user'
+    >;
+  };
+}
+
+export interface ApiPaymentPayment extends Struct.CollectionTypeSchema {
+  collectionName: 'payments';
+  info: {
+    description: '';
+    displayName: 'Payment';
+    pluralName: 'payments';
+    singularName: 'payment';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    amount: Schema.Attribute.Decimal;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    currency: Schema.Attribute.Enumeration<['USD', 'VND']>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::payment.payment'
+    > &
+      Schema.Attribute.Private;
+    order: Schema.Attribute.Relation<'oneToOne', 'api::order.order'>;
+    paymentIntentId: Schema.Attribute.String;
+    publishedAt: Schema.Attribute.DateTime;
+    statusPayment: Schema.Attribute.Enumeration<
+      ['Succeeded', 'Failed', 'Pending']
+    >;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    users_permissions_user: Schema.Attribute.Relation<
+      'oneToOne',
       'plugin::users-permissions.user'
     >;
   };
@@ -742,7 +782,6 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
       'images' | 'files' | 'videos' | 'audios',
       true
     >;
-    order: Schema.Attribute.Relation<'manyToOne', 'api::order.order'>;
     pricing: Schema.Attribute.Relation<'manyToOne', 'api::pricing.pricing'>;
     product_organization: Schema.Attribute.Relation<
       'oneToOne',
@@ -1269,6 +1308,7 @@ export interface PluginUsersPermissionsUser
       Schema.Attribute.SetMinMaxLength<{
         minLength: 6;
       }>;
+    payment: Schema.Attribute.Relation<'oneToOne', 'api::payment.payment'>;
     provider: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
     resetPasswordToken: Schema.Attribute.String & Schema.Attribute.Private;
@@ -1306,6 +1346,7 @@ declare module '@strapi/strapi' {
       'api::global.global': ApiGlobalGlobal;
       'api::inventory.inventory': ApiInventoryInventory;
       'api::order.order': ApiOrderOrder;
+      'api::payment.payment': ApiPaymentPayment;
       'api::pricing.pricing': ApiPricingPricing;
       'api::product-organization.product-organization': ApiProductOrganizationProductOrganization;
       'api::product.product': ApiProductProduct;

@@ -20,12 +20,6 @@
     "totalPrice": {
       "type": "decimal"
     },
-    "products": {
-      "type": "relation",
-      "relation": "oneToMany",
-      "target": "api::product.product",
-      "mappedBy": "order"
-    },
     "name": {
       "type": "string"
     },
@@ -45,6 +39,15 @@
         "Completed",
         "Cancelled"
       ]
+    },
+    "lineItems": {
+      "type": "json"
+    },
+    "payment": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::payment.payment",
+      "mappedBy": "order"
     }
   }
 }

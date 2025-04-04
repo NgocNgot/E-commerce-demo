@@ -1,39 +1,17 @@
-"use strict";
-const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+import Stripe from "stripe";
+// Initialize Stripe
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '');
 
-module.exports = {
-  async checkout(ctx) {
-    try {
-      const { cart } = ctx.request.body;
+const paymentIntent = await stripe.paymentIntents.create({
+  amount: 11 * 100,
+  currency: "USD",
+  payment_method: paymentMethodId,
+  users_permissions_user: users_permissions_user,
+  order: { id: orderId },  // Save relation to order
+  confirm: true,
+  return_url: "https://stripe.dicom-interactive.com/payment-success",
+});
 
-      if (!cart || cart.length === 0) {
-        return ctx.badRequest("Cart is empty");
-      }
-
-      const lineItems = cart.map((item) => ({
-        price_data: {
-          currency: "usd",
-          product_data: {
-            name: item.title,
-            images: [item.image],
-          },
-          unit_amount: Math.round(item.price * 100),
-        },
-        quantity: item.quantity,
-      }));
-
-      const session = await stripe.checkout.sessions.create({
-        payment_method_types: ["card"],
-        line_items: lineItems,
-        mode: "payment",
-        success_url: `${process.env.NEXT_PUBLIC_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${process.env.NEXT_PUBLIC_URL}/cart`,
-      });
-
-      return { url: session.url };
-    } catch (error) {
-      console.error("Stripe checkout error:", error);
-      return ctx.badRequest("Error processing payment");
-    }
-  },
-};
+if (paymentIntent.status !== "succeeded") {
+  return res.status(400).json({ success: false, message: "Payment failed", paymentIntent });
+}
