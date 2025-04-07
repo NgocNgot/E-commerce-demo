@@ -1,12 +1,10 @@
-module.exports = {
-  routes: [
-    {
-      method: "POST",
-      path: "/payments",
-      handler: "payment.createPaymentIntent",
-      config: {
-        auth: false,
-      },
+module.exports = [
+  {
+    method: 'POST',
+    path: '/payments',
+    handler: 'payment-custom.createPaymentIntent',
+    config: {
+      auth: false,
     },
-  ],
-};
+  },
+];

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
 import Image from "next/image";
 import { loadStripe } from "@stripe/stripe-js";
@@ -46,9 +46,9 @@ function Checkout() {
 
         if (!token) {
             alert("You need to log in before making a payment!");
+            setLoading(false);
             return;
         }
-
         setLoading(true);
 
         try {
@@ -132,7 +132,7 @@ function Checkout() {
                     return;
                 }
 
-                console.log("Payment Method created:", paymentMethod);
+                console.log("Payment Method created nèeê:", paymentMethod);
 
                 // Create payment intent and link it with order
                 const paymentResponse = await fetch(
@@ -147,7 +147,6 @@ function Checkout() {
                             data: {
                                 amount: totalAmount / 100,
                                 currency: "USD",
-                                statusPayment: "Pending",
                                 users_permissions_user: { id: 2 },
                                 order: { id: finalOrderId },
                                 paymentIntentId: paymentMethod.id,
@@ -180,8 +179,30 @@ function Checkout() {
                     alert(`Payment failed: ${error.message}`);
                 } else if (paymentIntent && paymentIntent.status === "succeeded") {
                     alert("Payment successful!");
-                    localStorage.setItem("cart", "[]");
-                    setCart([]);
+
+                    // Update payment status to "Succeeded" in Strapi
+                    const updatePaymentStatus = await fetch(
+                        `http://localhost:1337/api/payments/${paymentData.data.id}`,
+                        {
+                            method: "PUT",
+                            headers: {
+                                "Content-Type": "application/json",
+                                Authorization: `Bearer ${token}`,
+                            },
+                            body: JSON.stringify({
+                                data: {
+                                    statusPayment: "Succeeded",
+                                },
+                            }),
+                        }
+                    );
+
+                    if (updatePaymentStatus.ok) {
+                        localStorage.setItem("cart", "[]");
+                        setCart([]);
+                    } else {
+                        alert("Failed to update payment status!");
+                    }
                 }
             }, 3000); // Delay 3 seconds to ensure order is created
         } catch (error) {
@@ -267,7 +288,7 @@ function Checkout() {
                                     <div className="p-4 space-y-4">
                                         {/* Card Number */}
                                         <div className="h-10 bg-gray-200 rounded-xl">
-                                            <CardElement className="border p-3 rounded-md" />
+                                            <CardElement className="border p-3 rounded-md" options={{ hidePostalCode: true }} />
                                             {/* <CardNumberElement id="cardNumber" className="w-full p-2" /> */}
                                         </div>
 
@@ -366,5 +387,13 @@ export default function CheckoutPage() {
         <Elements stripe={stripePromise}>
             <Checkout />
         </Elements>
+        // <Elements stripe={stripePromise}>
+        //     <form onSubmit={handlePayment}>
+        //         <CardElement />
+        //         <button type="submit" disabled={!stripe}>Pay</button>
+        //     </form>
+        // </Elements>
+
     );
 }
+
