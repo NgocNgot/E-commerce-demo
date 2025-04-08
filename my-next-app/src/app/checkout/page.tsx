@@ -6,7 +6,6 @@ import Image from "next/image";
 import { loadStripe } from "@stripe/stripe-js";
 const stripePromise = loadStripe("pk_test_51R91vrPbbfCp8zjVn18peJqrR2xvL2Q28PV39fa8QBqXui9u47abRheE0tWjEUff53ryeo3GBR25UyzCl1ZDSgX5007KhHxUn7");
 import { CardElement, useStripe, useElements, Elements } from "@stripe/react-stripe-js";
-import { CardNumberElement, CardExpiryElement, CardCvcElement } from '@stripe/react-stripe-js';
 
 function Checkout() {
     const [cart, setCart] = useState<any[]>([]);  // Send Cart data is array
@@ -22,7 +21,6 @@ function Checkout() {
 
     const stripe = useStripe();
     const elements = useElements();
-    const cardElement = elements?.getElement(CardElement);
 
     useEffect(() => {
         const storedCart = JSON.parse(localStorage.getItem("cart") || "[]");
@@ -132,7 +130,7 @@ function Checkout() {
                     return;
                 }
 
-                console.log("Payment Method created nèeê:", paymentMethod);
+                console.log("Payment Method created:", paymentMethod);
 
                 // Create payment intent and link it with order
                 const paymentResponse = await fetch(
@@ -149,7 +147,7 @@ function Checkout() {
                                 currency: "USD",
                                 users_permissions_user: { id: 2 },
                                 order: { id: finalOrderId },
-                                paymentIntentId: paymentMethod.id,
+                                paymentMethodId: paymentMethod.id,
                             },
                         }),
                     }
@@ -179,7 +177,6 @@ function Checkout() {
                     alert(`Payment failed: ${error.message}`);
                 } else if (paymentIntent && paymentIntent.status === "succeeded") {
                     alert("Payment successful!");
-
                     // Update payment status to "Succeeded" in Strapi
                     const updatePaymentStatus = await fetch(
                         `http://localhost:1337/api/payments/${paymentData.data.id}`,
@@ -365,7 +362,7 @@ function Checkout() {
                                 <div className="mb-8">
                                     <button
                                         onClick={handlePayment}
-                                        disabled={loading}
+                                        disabled={!stripe || loading}
                                         className={`w-full py-4 rounded-full text-center font-bold text-white ${loading ? "bg-rose-400" : "bg-rose-400 hover:bg-rose-500"
                                             }`}
                                     >
