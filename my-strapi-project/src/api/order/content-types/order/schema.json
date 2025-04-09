@@ -48,6 +48,9 @@
       "relation": "oneToOne",
       "target": "api::payment.payment",
       "mappedBy": "order"
+    },
+    "email": {
+      "type": "string"
     }
   }
 }

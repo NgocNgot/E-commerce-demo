@@ -6,6 +6,7 @@ import Image from "next/image";
 import { loadStripe } from "@stripe/stripe-js";
 const stripePromise = loadStripe("pk_test_51R91vrPbbfCp8zjVn18peJqrR2xvL2Q28PV39fa8QBqXui9u47abRheE0tWjEUff53ryeo3GBR25UyzCl1ZDSgX5007KhHxUn7");
 import { CardElement, useStripe, useElements, Elements } from "@stripe/react-stripe-js";
+import { title } from "process";
 
 function Checkout() {
     const [cart, setCart] = useState<any[]>([]);  // Send Cart data is array
@@ -14,6 +15,7 @@ function Checkout() {
         address: "",
         city: "",
         phone: "",
+        email: "",
     });
     const [loading, setLoading] = useState(false);
     const [saveInfo, setSaveInfo] = useState(false);
@@ -75,11 +77,13 @@ function Checkout() {
                             address: userInfo.address,
                             city: userInfo.city,
                             phone: userInfo.phone,
+                            email: userInfo.email,
                             statusCheckout: "Pending",
                             lineItems: cart.map((item) => ({
                                 product: { id: item.id },
                                 quantity: item.quantity,
                                 price: item.price,
+                                title: item.title,
                             })),
                         },
                     }),
@@ -119,7 +123,7 @@ function Checkout() {
                         card: cardElement,
                         billing_details: {
                             name: userInfo.name,
-                            email: "email@example.com",
+                            email: userInfo.email,
                         },
                     });
 
@@ -148,6 +152,7 @@ function Checkout() {
                                 users_permissions_user: { id: 2 },
                                 order: { id: finalOrderId },
                                 paymentMethodId: paymentMethod.id,
+                                email: userInfo.email,
                             },
                         }),
                     }
@@ -238,14 +243,25 @@ function Checkout() {
                                     value={userInfo.name}
                                     onChange={handleChange}
                                 />
-                                <input
-                                    type="text"
-                                    name="phone"
-                                    placeholder="Your phone number"
-                                    className="w-full p-3 border rounded-xl mb-4"
-                                    value={userInfo.phone}
-                                    onChange={handleChange}
-                                />
+                                <div className="grid grid-cols-2 gap-4 mb-4">
+                                    <input
+                                        type="text"
+                                        name="phone"
+                                        placeholder="Your phone number"
+                                        className="w-full p-3 border rounded-xl"
+                                        value={userInfo.phone}
+                                        onChange={handleChange}
+                                    />
+                                    <input
+                                        type="email"
+                                        name="email"
+                                        placeholder="Your email"
+                                        className="w-full p-3 border rounded-xl"
+                                        value={userInfo.email}
+                                        onChange={handleChange}
+                                    />
+                                </div>
+
                                 <div className="grid grid-cols-2 gap-4 mb-4">
                                     <input
                                         type="text"
@@ -286,19 +302,7 @@ function Checkout() {
                                         {/* Card Number */}
                                         <div className="h-10 bg-gray-200 rounded-xl">
                                             <CardElement className="border p-3 rounded-md" options={{ hidePostalCode: true }} />
-                                            {/* <CardNumberElement id="cardNumber" className="w-full p-2" /> */}
                                         </div>
-
-                                        {/* Expiration Date and Verification Code */}
-                                        {/* <div className="flex space-x-4">
-                                            <div className="h-10 bg-gray-200 rounded-xl w-2/3">
-                                                <CardExpiryElement id="expiryDate" className="w-full p-2" />
-                                            </div>
-                                            <div className="h-10 bg-gray-200 rounded-xl w-1/3">
-                                                <CardCvcElement id="cvc" className="w-full p-2" />
-                                            </div>
-                                        </div>
-                                         */}
                                     </div>
                                 </div>
                             </div>
@@ -384,13 +388,6 @@ export default function CheckoutPage() {
         <Elements stripe={stripePromise}>
             <Checkout />
         </Elements>
-        // <Elements stripe={stripePromise}>
-        //     <form onSubmit={handlePayment}>
-        //         <CardElement />
-        //         <button type="submit" disabled={!stripe}>Pay</button>
-        //     </form>
-        // </Elements>
-
     );
 }
 

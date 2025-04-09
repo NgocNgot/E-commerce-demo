@@ -1,7 +1,8 @@
 import { factories } from "@strapi/strapi";
 import Stripe from "stripe";
+import fs from "fs";
+import path from "path";
 
-// Initialize Stripe
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
   apiVersion: "2022-11-15",
 });
@@ -45,12 +46,104 @@ export default factories.createCoreController(
               amount: amount,
               paymentMethodId: paymentMethodId,
               paymentIntentId: paymentIntent.id,
-              statusPayment: "Succeeded", // Update statusPayment to "Succeeded"
+              statusPayment: "Succeeded",
             },
           }
         );
+        const payment = await strapi.db.query("api::payment.payment").findOne({
+          where: { id: entry.id },
+          populate: {
+            order: {
+              populate: {
+                lineItems: {
+                  populate: {
+                    product: true,
+                  },
+                },
+              },
+            },
+            users_permissions_user: true,
+          },
+        });
 
-        ctx.send({ success: true, paymentIntent, data: entry });
+        if (!payment || !payment.order) {
+          return ctx.notFound("Payment or order not found");
+        }
+
+        try {
+          const order = payment.order;
+          const orderId = order.documentId;
+          const customerName = payment.users_permissions_user.username;
+          const totalPrice = order.totalPrice;
+          const recipientEmail = order.email; // Replace with the recipient's name
+
+          // const recipientEmail = "ngocb2203515@student.ctu.edu.vn"; // Send email confirmation
+          const emailTemplatePath = path.join(
+            process.cwd(),
+            "emails",
+            "order-confirmation.html"
+          );
+
+          let emailHTML = fs.readFileSync(emailTemplatePath, "utf8");
+          let orderItemsHTML = `
+            <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+              <thead>
+                <tr>
+                  <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Product</th>
+                  <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Quantity</th>
+                  <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Price</th>
+                  <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Item Total</th>
+                </tr>
+              </thead>
+              <tbody>
+          `;
+          order.lineItems.forEach((item) => {
+            orderItemsHTML += `
+                <tr>
+                  <td style="border: 1px solid #ddd; padding: 8px;">${item.title || "Not found name Product"}</td>
+                  <td style="border: 1px solid #ddd; padding: 8px;">${item.quantity}</td>
+                  <td style="border: 1px solid #ddd; padding: 8px;">${item.price} USD</td>
+                  <td style="border: 1px solid #ddd; padding: 8px;">${item.quantity * item.price} USD</td>
+                </tr>
+            `;
+          });
+          orderItemsHTML += `
+              </tbody>
+            </table>
+          `;
+          // Replace placeholders in the email template with actual data
+          emailHTML = emailHTML.replace("{{orderId}}", orderId);
+          emailHTML = emailHTML.replace("{{customerName}}", customerName);
+          emailHTML = emailHTML.replace("{{orderItems}}", orderItemsHTML);
+          emailHTML = emailHTML.replace("{{totalAmount}}", totalPrice + " USD");
+          emailHTML = emailHTML.replace(
+            "{{orderDate}}",
+            new Date(order.createdAt).toLocaleDateString("vi-VN")
+          );
+          emailHTML = emailHTML.replace(
+            "{{shippingAddress}}",
+            `${order.address}, ${order.city}`
+          );
+          emailHTML = emailHTML.replace("{{phoneNumber}}", order.phone);
+          emailHTML = emailHTML.replace("{{name}}", order.name);
+          // Send email confirmation
+          await strapi.plugins.email.services.email.send({
+            to: recipientEmail,
+            from: "nbichngoc3904@gmail.com",
+            subject: `Confirmation of Order #${orderId}`,
+            html: emailHTML,
+          });
+
+          ctx.send({ success: true, paymentIntent, data: entry });
+        } catch (error) {
+          console.log("Error sending email:", error);
+          ctx.send({
+            success: true,
+            paymentIntent,
+            data: entry,
+            message: "Payment successful, but email could not be sent.",
+          });
+        }
       } catch (error) {
         console.error("Stripe error during create:", error);
         return ctx.badRequest("Payment error during create", {
