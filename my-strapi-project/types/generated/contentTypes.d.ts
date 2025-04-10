@@ -630,6 +630,8 @@ export interface ApiOrderOrder extends Struct.CollectionTypeSchema {
     payment: Schema.Attribute.Relation<'oneToOne', 'api::payment.payment'>;
     phone: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
+    shipping: Schema.Attribute.Relation<'manyToOne', 'api::shipping.shipping'>;
+    shippingCost: Schema.Attribute.Decimal;
     statusCheckout: Schema.Attribute.Enumeration<
       ['Pending', 'Completed', 'Cancelled']
     >;
@@ -769,10 +771,12 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     description: Schema.Attribute.Text;
+    height: Schema.Attribute.Decimal;
     inventory: Schema.Attribute.Relation<
       'oneToOne',
       'api::inventory.inventory'
     >;
+    length: Schema.Attribute.Decimal;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -789,9 +793,46 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
       'api::product-organization.product-organization'
     >;
     publishedAt: Schema.Attribute.DateTime;
-    shipping: Schema.Attribute.Relation<'manyToOne', 'api::shipping.shipping'>;
     slug: Schema.Attribute.UID<'title'>;
     title: Schema.Attribute.String;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    weight: Schema.Attribute.Decimal;
+    width: Schema.Attribute.Decimal;
+  };
+}
+
+export interface ApiShippingRateShippingRate
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'shipping_rates';
+  info: {
+    displayName: 'ShippingRate';
+    pluralName: 'shipping-rates';
+    singularName: 'shipping-rate';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    flatRate: Schema.Attribute.Decimal;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::shipping-rate.shipping-rate'
+    > &
+      Schema.Attribute.Private;
+    maxVolume: Schema.Attribute.Decimal;
+    maxWeight: Schema.Attribute.Decimal;
+    minVolume: Schema.Attribute.Decimal;
+    minWeight: Schema.Attribute.Decimal;
+    pricePerVolume: Schema.Attribute.Decimal;
+    pricePerWeight: Schema.Attribute.Decimal;
+    publishedAt: Schema.Attribute.DateTime;
+    shipping: Schema.Attribute.Relation<'manyToOne', 'api::shipping.shipping'>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -801,6 +842,7 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
 export interface ApiShippingShipping extends Struct.CollectionTypeSchema {
   collectionName: 'shippings';
   info: {
+    description: '';
     displayName: 'Shipping';
     pluralName: 'shippings';
     singularName: 'shipping';
@@ -812,19 +854,24 @@ export interface ApiShippingShipping extends Struct.CollectionTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    isPhysical: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
+    descriptionShippingMethod: Schema.Attribute.Blocks;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
       'api::shipping.shipping'
     > &
       Schema.Attribute.Private;
-    products: Schema.Attribute.Relation<'oneToMany', 'api::product.product'>;
+    nameShippingMethod: Schema.Attribute.String;
+    orders: Schema.Attribute.Relation<'oneToMany', 'api::order.order'>;
     publishedAt: Schema.Attribute.DateTime;
+    shipping_rates: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::shipping-rate.shipping-rate'
+    >;
+    shippingMethodId: Schema.Attribute.String;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    weight: Schema.Attribute.BigInteger;
   };
 }
 
@@ -1351,6 +1398,7 @@ declare module '@strapi/strapi' {
       'api::pricing.pricing': ApiPricingPricing;
       'api::product-organization.product-organization': ApiProductOrganizationProductOrganization;
       'api::product.product': ApiProductProduct;
+      'api::shipping-rate.shipping-rate': ApiShippingRateShippingRate;
       'api::shipping.shipping': ApiShippingShipping;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;

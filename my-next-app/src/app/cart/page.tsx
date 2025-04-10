@@ -32,6 +32,11 @@ export default function CartPage() {
             quantity: item.quantity,
             title: product.title,
             price: product.pricing?.price || 0,
+            weight: product.weight,
+            length: product.length,
+            width: product.width,
+            height: product.height,
+
             image: product.media[0].url
               ? `http://localhost:1337${product.media[0].url}`
               : "/placeholder.jpg",

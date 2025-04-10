@@ -51,6 +51,15 @@
     },
     "email": {
       "type": "string"
+    },
+    "shippingCost": {
+      "type": "decimal"
+    },
+    "shipping": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::shipping.shipping",
+      "inversedBy": "orders"
     }
   }
 }

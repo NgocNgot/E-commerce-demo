@@ -2,6 +2,11 @@ export interface Product {
   documentId: string;
   title: string;
   slug: string;
+  weight: number;
+  length: number;
+  width: number;
+  height: number;
+
   description?: string | { children: { text: string }[] }[];
   media: { url: string }[];
   pricing: { price: number };

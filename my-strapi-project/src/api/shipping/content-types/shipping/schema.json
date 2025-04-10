@@ -4,23 +4,32 @@
   "info": {
     "singularName": "shipping",
     "pluralName": "shippings",
-    "displayName": "Shipping"
+    "displayName": "Shipping",
+    "description": ""
   },
   "options": {
     "draftAndPublish": true
   },
   "attributes": {
-    "isPhysical": {
-      "type": "boolean",
-      "default": true
+    "nameShippingMethod": {
+      "type": "string"
     },
-    "weight": {
-      "type": "biginteger"
+    "shippingMethodId": {
+      "type": "string"
     },
-    "products": {
+    "descriptionShippingMethod": {
+      "type": "blocks"
+    },
+    "shipping_rates": {
       "type": "relation",
       "relation": "oneToMany",
-      "target": "api::product.product",
+      "target": "api::shipping-rate.shipping-rate",
+      "mappedBy": "shipping"
+    },
+    "orders": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::order.order",
       "mappedBy": "shipping"
     }
   }

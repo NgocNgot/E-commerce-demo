@@ -62,17 +62,23 @@
       "relation": "oneToOne",
       "target": "api::product-organization.product-organization"
     },
-    "shipping": {
-      "type": "relation",
-      "relation": "manyToOne",
-      "target": "api::shipping.shipping",
-      "inversedBy": "products"
-    },
     "carts": {
       "type": "relation",
       "relation": "manyToMany",
       "target": "api::cart.cart",
       "inversedBy": "products"
+    },
+    "weight": {
+      "type": "decimal"
+    },
+    "length": {
+      "type": "decimal"
+    },
+    "width": {
+      "type": "decimal"
+    },
+    "height": {
+      "type": "decimal"
     }
   }
 }

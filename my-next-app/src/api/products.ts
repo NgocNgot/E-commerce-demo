@@ -12,6 +12,10 @@ const GET_PRODUCTS = gql`
       title
       description
       slug
+      weight
+      length
+      width
+      height
       media {
         url
       }
@@ -45,6 +49,10 @@ const GET_PRODUCT_BY_SLUG = gql`
       title
       description
       slug
+      weight
+      length
+      width
+      height
       media {
         url
       }
@@ -122,6 +130,10 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
       metaTitle: seoBlock?.metaTitle || productData.title || "Default Title",
       metaDescription: seoBlock?.metaDescription || "Default Description",
       metaKeywords: seoBlock?.keywords || "Default Keywords",
+      weight: productData.weight || 0,
+      length: productData.length || 0,
+      width: productData.width || 0,
+      height: productData.height || 0,
       body:
         productData.blocks.find(
           (block: any) => block.__typename === "ComponentSharedRichText"

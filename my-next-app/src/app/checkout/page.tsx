@@ -6,10 +6,11 @@ import Image from "next/image";
 import { loadStripe } from "@stripe/stripe-js";
 const stripePromise = loadStripe("pk_test_51R91vrPbbfCp8zjVn18peJqrR2xvL2Q28PV39fa8QBqXui9u47abRheE0tWjEUff53ryeo3GBR25UyzCl1ZDSgX5007KhHxUn7");
 import { CardElement, useStripe, useElements, Elements } from "@stripe/react-stripe-js";
-import { title } from "process";
+import ShippingMethods from "@/app/checkout/ShippingMethods";
+import { LineItem } from "@/../types/shipping";
 
 function Checkout() {
-    const [cart, setCart] = useState<any[]>([]);  // Send Cart data is array
+    const [cart, setCart] = useState<any[]>([]); // Get cart
     const [userInfo, setUserInfo] = useState({
         name: "",
         address: "",
@@ -41,6 +42,25 @@ function Checkout() {
         }
     };
 
+    // Shipping methods
+    const [selectedShippingMethod, setSelectedShippingMethod] = useState<
+        string | null
+    >(null);
+    const [shippingCost, setShippingCost] = useState<number>(0);
+
+    const lineItemsForShipping: LineItem[] = cart.map((item) => ({
+        quantity: item.quantity,
+        weight: item.weight || 0,
+        length: item.length || 0,
+        width: item.width || 0,
+        height: item.height || 0,
+    }));
+    const handleShippingMethodSelect = (method: string, cost: number) => {
+        setSelectedShippingMethod(method);
+        setShippingCost(cost);
+        console.log("Selected Shipping Method:", method, "Cost:", cost);
+    };
+
     const handlePayment = async () => {
         const token = localStorage.getItem("token");
 
@@ -61,34 +81,38 @@ function Checkout() {
             }
 
             // Send cart data to the server to create an order
-            const orderResponse = await fetch(
-                "http://localhost:1337/api/orders",
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`,
+            const orderResponse = await fetch("http://localhost:1337/api/orders", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    data: {
+                        users_permissions_user: { id: 2 },
+                        totalPrice: getTotal(),
+                        name: userInfo.name,
+                        address: userInfo.address,
+                        city: userInfo.city,
+                        phone: userInfo.phone,
+                        email: userInfo.email,
+                        statusCheckout: "Pending",
+
+                        shippingCost: shippingCost,
+                        lineItems: cart.map((item) => ({
+                            product: { id: item.id },
+                            quantity: item.quantity,
+                            price: item.price,
+                            title: item.title,
+                            // Shipping need
+                            weight: item.weight,
+                            length: item.length,
+                            width: item.width,
+                            height: item.height,
+                        })),
                     },
-                    body: JSON.stringify({
-                        data: {
-                            users_permissions_user: { id: 2 },
-                            totalPrice: getTotal(),
-                            name: userInfo.name,
-                            address: userInfo.address,
-                            city: userInfo.city,
-                            phone: userInfo.phone,
-                            email: userInfo.email,
-                            statusCheckout: "Pending",
-                            lineItems: cart.map((item) => ({
-                                product: { id: item.id },
-                                quantity: item.quantity,
-                                price: item.price,
-                                title: item.title,
-                            })),
-                        },
-                    }),
-                }
-            );
+                }),
+            });
 
             const orderData = await orderResponse.json();
             if (!orderResponse.ok) {
@@ -223,7 +247,6 @@ function Checkout() {
         return `$${amount.toLocaleString()}`;
     };
 
-
     return (
         <>
             <Navbar />
@@ -284,11 +307,11 @@ function Checkout() {
 
                             {/* Shipping method */}
                             <div className="mb-8">
-                                <h2 className="text-2xl font-bold mb-4">Shipping method</h2>
-                                <div className="border rounded-xl p-3 flex justify-between items-center bg-rose-50">
-                                    <span>Standard</span>
-                                    <span className="font-semibold">FREE</span>
-                                </div>
+                                <ShippingMethods
+                                    lineItems={lineItemsForShipping}
+                                    totalPrice={getTotal()}
+                                    onSelectShippingMethod={handleShippingMethodSelect}
+                                />
                             </div>
 
                             {/* Payment section */}
@@ -301,13 +324,14 @@ function Checkout() {
                                     <div className="p-4 space-y-4">
                                         {/* Card Number */}
                                         <div className="h-10 bg-gray-200 rounded-xl">
-                                            <CardElement className="border p-3 rounded-md" options={{ hidePostalCode: true }} />
+                                            <CardElement
+                                                className="border p-3 rounded-md"
+                                                options={{ hidePostalCode: true }}
+                                            />
                                         </div>
                                     </div>
                                 </div>
                             </div>
-
-
                         </section>
 
                         {/* Right side */}
@@ -374,7 +398,6 @@ function Checkout() {
                                     </button>
                                 </div>
                             </div>
-
                         </aside>
                     </div>
                 </div>
