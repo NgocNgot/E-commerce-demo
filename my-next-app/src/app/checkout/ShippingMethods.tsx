@@ -4,7 +4,7 @@ import { fetchShippingMethodsApi } from '@/api/shipping';
 
 const ShippingMethods: React.FC<ShippingMethodsProps> = ({ lineItems, totalPrice, onSelectShippingMethod }) => {
     const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>([]);
-    const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
+    const [selectedMethodId, setSelectedMethodId] = useState<number | null>(null);
     const [shippingCosts, setShippingCosts] = useState<{ [key: string]: number }>({});
     useEffect(() => {
         const loadShippingMethods = async () => {
@@ -37,7 +37,7 @@ const ShippingMethods: React.FC<ShippingMethodsProps> = ({ lineItems, totalPrice
             });
 
             let shippingCost = 0;
-            if (method.shippingMethodId === 'FREE_OVER' && totalPrice >= 50) {
+            if (method.shippingMethodId === 'FREE_OVER' && totalPrice >= 100) {
                 shippingCost = 0;
             } else {
                 const applicableRate = method.shipping_rates.find(
@@ -55,8 +55,12 @@ const ShippingMethods: React.FC<ShippingMethodsProps> = ({ lineItems, totalPrice
         setShippingCosts(calculatedCosts);
     };
 
-    const handleSelectMethod = (methodId: string, cost: number) => {
-        setSelectedMethod(methodId);
+    const handleSelectMethod = (methodId: number, cost: number) => {
+        const selectedMethod = shippingMethods.find(method => method.id === methodId);
+        if (selectedMethod?.shippingMethodId === 'FREE_OVER' && totalPrice < 100) {
+            return;
+        }
+        setSelectedMethodId(methodId);
         onSelectShippingMethod(methodId, cost);
     };
 
@@ -65,22 +69,47 @@ const ShippingMethods: React.FC<ShippingMethodsProps> = ({ lineItems, totalPrice
             <h1 className="text-2xl font-bold mb-4">Shipping Method</h1>
             {shippingMethods.map((method) => (
                 <div key={method.id} className="mb-2">
-                    <label className="flex items-center">
+                    <label className={`flex items-center ${method.shippingMethodId === 'FREE_OVER' && totalPrice < 100 ? 'text-gray-400 cursor-not-allowed' : 'cursor-pointer'}`}>
                         <input
                             type="radio"
                             value={method.shippingMethodId}
-                            checked={selectedMethod === method.shippingMethodId}
-                            onChange={() => handleSelectMethod(method.shippingMethodId, shippingCosts[method.shippingMethodId] || 0)}
+                            checked={selectedMethodId === method.id}
+                            onChange={() =>
+                                handleSelectMethod(
+                                    method.id,
+                                    shippingCosts[method.shippingMethodId] || 0
+                                )
+                            }
                             className="mr-2"
+                            disabled={method.shippingMethodId === 'FREE_OVER' && totalPrice < 100}
                         />
-                        <span>{method.nameShippingMethod}</span> ---
-                        <span>{shippingCosts[method.shippingMethodId] !== undefined ? ` $${shippingCosts[method.shippingMethodId]?.toFixed(2)}` : ' Calculating...'}</span>
+                        <div className="flex justify-between w-full">
+                            <span>{method.nameShippingMethod}</span>
+                            <div className="flex items-center">
+                                {method.shippingMethodId === "FREE_OVER" && totalPrice < 100 && (
+                                    <span className="text-sm text-red-500 mr-2">
+                                        (Need to order $100)
+                                    </span>
+                                )}
+                                <span className="text-right">
+                                    {shippingCosts[method.shippingMethodId] !== undefined
+                                        ? ` $${shippingCosts[method.shippingMethodId]?.toFixed(2)}`
+                                        : " Calculating..."}
+                                </span>
+                            </div>
+                        </div>
                     </label>
-                    <p className="text-sm text-gray-500">{method.descriptionShippingMethod.map((desc: any, index: number) => (
-                        <span key={index}>{desc?.children?.map((child: any, childIndex: number) => (
-                            <span key={childIndex}>{child?.text}</span>
-                        ))}</span>
-                    ))}</p>
+                    <p className="text-sm text-gray-500">
+                        {method.descriptionShippingMethod.map(
+                            (desc: any, index: number) => (
+                                <span key={index}>
+                                    {desc?.children?.map((child: any, childIndex: number) => (
+                                        <span key={childIndex}>{child?.text}</span>
+                                    ))}
+                                </span>
+                            )
+                        )}
+                    </p>
                 </div>
             ))}
         </div>

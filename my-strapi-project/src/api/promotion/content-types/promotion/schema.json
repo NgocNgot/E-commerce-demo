@@ -1,0 +1,39 @@
+{
+  "kind": "collectionType",
+  "collectionName": "promotions",
+  "info": {
+    "singularName": "promotion",
+    "pluralName": "promotions",
+    "displayName": "Promotion",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "blocks"
+    },
+    "startDate": {
+      "type": "date"
+    },
+    "endDate": {
+      "type": "date"
+    },
+    "discount_codes": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::discount-code.discount-code",
+      "inversedBy": "promotions"
+    },
+    "buy_x_get_ies": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::buy-x-get-y.buy-x-get-y",
+      "inversedBy": "promotions"
+    }
+  }
+}

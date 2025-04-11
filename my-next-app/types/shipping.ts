@@ -29,5 +29,5 @@ export interface LineItem {
 export interface ShippingMethodsProps {
   lineItems: LineItem[];
   totalPrice: number;
-  onSelectShippingMethod: (method: string, cost: number) => void;
+  onSelectShippingMethod: (methodId: number, cost: number) => void;
 }

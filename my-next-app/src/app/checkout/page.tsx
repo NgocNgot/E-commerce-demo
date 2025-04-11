@@ -9,6 +9,7 @@ import { CardElement, useStripe, useElements, Elements } from "@stripe/react-str
 import ShippingMethods from "@/app/checkout/ShippingMethods";
 import { LineItem } from "@/../types/shipping";
 
+
 function Checkout() {
     const [cart, setCart] = useState<any[]>([]); // Get cart
     const [userInfo, setUserInfo] = useState({
@@ -43,8 +44,8 @@ function Checkout() {
     };
 
     // Shipping methods
-    const [selectedShippingMethod, setSelectedShippingMethod] = useState<
-        string | null
+    const [selectedShippingMethodId, setSelectedShippingMethodId] = useState<
+        number | null
     >(null);
     const [shippingCost, setShippingCost] = useState<number>(0);
 
@@ -55,10 +56,10 @@ function Checkout() {
         width: item.width || 0,
         height: item.height || 0,
     }));
-    const handleShippingMethodSelect = (method: string, cost: number) => {
-        setSelectedShippingMethod(method);
+    const handleShippingMethodSelect = (methodId: number, cost: number) => {
+        setSelectedShippingMethodId(methodId - 1);
         setShippingCost(cost);
-        console.log("Selected Shipping Method:", method, "Cost:", cost);
+        console.log("Selected Shipping Method:", methodId - 1, "Cost:", cost);
     };
 
     const handlePayment = async () => {
@@ -72,13 +73,16 @@ function Checkout() {
         setLoading(true);
 
         try {
+            let userId;
+            console.log("User Id nè nhaaaaa:", userId);
             // Get total price of cart
-            const totalAmount = getTotal() * 100; // Convert to cents
+            const totalAmount = (getTotal() + shippingCost) * 100; // Convert to cents
             if (totalAmount <= 0) {
                 alert("Cart is empty!");
                 setLoading(false);
                 return;
             }
+            console.log("shipping nèeeeê:", selectedShippingMethodId);
 
             // Send cart data to the server to create an order
             const orderResponse = await fetch("http://localhost:1337/api/orders", {
@@ -97,6 +101,7 @@ function Checkout() {
                         phone: userInfo.phone,
                         email: userInfo.email,
                         statusCheckout: "Pending",
+                        shipping: { id: selectedShippingMethodId },
 
                         shippingCost: shippingCost,
                         lineItems: cart.map((item) => ({
@@ -373,7 +378,7 @@ function Checkout() {
                                         <div className="flex justify-between">
                                             <span>Shipping</span>
                                             <span className="font-medium text-sm text-rose-500">
-                                                FREE
+                                                {shippingCost > 0 ? formatCurrency(shippingCost) : "FREE"}
                                             </span>
                                         </div>
                                     </div>
@@ -382,7 +387,7 @@ function Checkout() {
                                     <div className="border-t border-gray-300 mt-4 pt-4 flex justify-between items-center">
                                         <span className="text-lg font-medium">Total</span>
                                         <div className="text-2xl font-bold text-rose-500">
-                                            {formatCurrency(getTotal())}
+                                            {formatCurrency(getTotal() + shippingCost)}
                                         </div>
                                     </div>
                                 </div>

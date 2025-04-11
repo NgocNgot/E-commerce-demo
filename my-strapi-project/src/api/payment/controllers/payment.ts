@@ -75,9 +75,9 @@ export default factories.createCoreController(
           const orderId = order.documentId;
           const customerName = payment.users_permissions_user.username;
           const totalPrice = order.totalPrice;
-          const recipientEmail = order.email; // Replace with the recipient's name
+          const recipientEmail = order.email;
+          const shippingCost = order.shippingCost || 0;
 
-          // const recipientEmail = "ngocb2203515@student.ctu.edu.vn"; // Send email confirmation
           const emailTemplatePath = path.join(
             process.cwd(),
             "emails",
@@ -115,7 +115,14 @@ export default factories.createCoreController(
           emailHTML = emailHTML.replace("{{orderId}}", orderId);
           emailHTML = emailHTML.replace("{{customerName}}", customerName);
           emailHTML = emailHTML.replace("{{orderItems}}", orderItemsHTML);
-          emailHTML = emailHTML.replace("{{totalAmount}}", totalPrice + " USD");
+          emailHTML = emailHTML.replace(
+            "{{shippingCost}}",
+            shippingCost.toFixed(2) + " USD"
+          );
+          emailHTML = emailHTML.replace(
+            "{{totalAmount}}",
+            totalPrice + shippingCost + " USD"
+          );
           emailHTML = emailHTML.replace(
             "{{orderDate}}",
             new Date(order.createdAt).toLocaleDateString("vi-VN")

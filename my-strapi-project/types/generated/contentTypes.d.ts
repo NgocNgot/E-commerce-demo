@@ -475,6 +475,40 @@ export interface ApiAuthorAuthor extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiBuyXGetYBuyXGetY extends Struct.CollectionTypeSchema {
+  collectionName: 'buy_x_get_ies';
+  info: {
+    displayName: 'BuyXGetY';
+    pluralName: 'buy-x-get-ies';
+    singularName: 'buy-x-get-y';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    buyQuantity: Schema.Attribute.Integer;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    getProducts: Schema.Attribute.Relation<'oneToOne', 'api::product.product'>;
+    getQuantity: Schema.Attribute.Integer;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::buy-x-get-y.buy-x-get-y'
+    > &
+      Schema.Attribute.Private;
+    promotions: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::promotion.promotion'
+    >;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiCartCart extends Struct.CollectionTypeSchema {
   collectionName: 'carts';
   info: {
@@ -534,6 +568,41 @@ export interface ApiCategoryCategory extends Struct.CollectionTypeSchema {
     products: Schema.Attribute.Relation<'manyToMany', 'api::product.product'>;
     publishedAt: Schema.Attribute.DateTime;
     slug: Schema.Attribute.UID;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiDiscountCodeDiscountCode
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'discount_codes';
+  info: {
+    displayName: 'DiscountCode';
+    pluralName: 'discount-codes';
+    singularName: 'discount-code';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    code: Schema.Attribute.String & Schema.Attribute.Unique;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    discountType: Schema.Attribute.Enumeration<['Percentage', 'FixedAmount']>;
+    discountValue: Schema.Attribute.Decimal;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::discount-code.discount-code'
+    > &
+      Schema.Attribute.Private;
+    promotions: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::promotion.promotion'
+    >;
+    publishedAt: Schema.Attribute.DateTime;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -800,6 +869,46 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     weight: Schema.Attribute.Decimal;
     width: Schema.Attribute.Decimal;
+  };
+}
+
+export interface ApiPromotionPromotion extends Struct.CollectionTypeSchema {
+  collectionName: 'promotions';
+  info: {
+    description: '';
+    displayName: 'Promotion';
+    pluralName: 'promotions';
+    singularName: 'promotion';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    buy_x_get_ies: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::buy-x-get-y.buy-x-get-y'
+    >;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    description: Schema.Attribute.Blocks;
+    discount_codes: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::discount-code.discount-code'
+    >;
+    endDate: Schema.Attribute.Date;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::promotion.promotion'
+    > &
+      Schema.Attribute.Private;
+    name: Schema.Attribute.String;
+    publishedAt: Schema.Attribute.DateTime;
+    startDate: Schema.Attribute.Date;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
   };
 }
 
@@ -1389,8 +1498,10 @@ declare module '@strapi/strapi' {
       'api::about.about': ApiAboutAbout;
       'api::article.article': ApiArticleArticle;
       'api::author.author': ApiAuthorAuthor;
+      'api::buy-x-get-y.buy-x-get-y': ApiBuyXGetYBuyXGetY;
       'api::cart.cart': ApiCartCart;
       'api::category.category': ApiCategoryCategory;
+      'api::discount-code.discount-code': ApiDiscountCodeDiscountCode;
       'api::global.global': ApiGlobalGlobal;
       'api::inventory.inventory': ApiInventoryInventory;
       'api::order.order': ApiOrderOrder;
@@ -1398,6 +1509,7 @@ declare module '@strapi/strapi' {
       'api::pricing.pricing': ApiPricingPricing;
       'api::product-organization.product-organization': ApiProductOrganizationProductOrganization;
       'api::product.product': ApiProductProduct;
+      'api::promotion.promotion': ApiPromotionPromotion;
       'api::shipping-rate.shipping-rate': ApiShippingRateShippingRate;
       'api::shipping.shipping': ApiShippingShipping;
       'plugin::content-releases.release': PluginContentReleasesRelease;

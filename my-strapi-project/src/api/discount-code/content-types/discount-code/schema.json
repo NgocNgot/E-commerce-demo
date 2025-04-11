@@ -1,0 +1,34 @@
+{
+  "kind": "collectionType",
+  "collectionName": "discount_codes",
+  "info": {
+    "singularName": "discount-code",
+    "pluralName": "discount-codes",
+    "displayName": "DiscountCode"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "code": {
+      "type": "string",
+      "unique": true
+    },
+    "discountType": {
+      "type": "enumeration",
+      "enum": [
+        "Percentage",
+        "FixedAmount"
+      ]
+    },
+    "discountValue": {
+      "type": "decimal"
+    },
+    "promotions": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::promotion.promotion",
+      "mappedBy": "discount_codes"
+    }
+  }
+}
